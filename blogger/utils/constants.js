@@ -1,0 +1,11 @@
+export const requiredError = 'This field is required';
+export const emailErrorMsg = 'Please enter valid Email address';
+export const passwordErrorMsg = 'Password must be greter than 8';
+export const loginApi = 'https://blogger-mobile.herokuapp.com/log-in';
+export const signupApi = 'https://blogger-mobile.herokuapp.com/sign-up';
+export const allBlogsApi= 'https://blogger-mobile.herokuapp.com/blogs';
+export const getAllUsersBlog= 'https://blogger-mobile.herokuapp.com/users';
+export const getAllCommentsApi='https://blogger-mobile.herokuapp.com/comments';
+export const getAllUnfollowApi= "https://blogger-mobile.herokuapp.com/get-all-unfollow";
+export const followUserApi = "https://blogger-mobile.herokuapp.com/follow";
+export const noDpImage='https://t3.ftcdn.net/jpg/03/46/83/96/240_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg';
