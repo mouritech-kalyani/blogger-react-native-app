@@ -34,7 +34,6 @@ const Signin = ({navigation}) => {
     } else if (password.length < 8) {
       setpasswordError(passwordErrorMsg);
     } else {
-      console.log(userName, password);
       setisLoading(true);
       axios
         .post(loginApi, {
@@ -45,7 +44,6 @@ const Signin = ({navigation}) => {
         .then(res => {
           if (res.data !== false) {
             setisLoading(false);
-            console.log('ress is',res.data)
             var parseingRes=res.data;
             var resUserId;
             var resFullName;

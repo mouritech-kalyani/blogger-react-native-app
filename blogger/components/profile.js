@@ -8,12 +8,13 @@ import {
   TextInput,
   Button,
   FlatList,
+  TouchableOpacity,
   ScrollView,
   Pressable,
 } from 'react-native';
 import {Div} from 'reactnative-ui-bootstrap';
 import * as ImagePicker from 'react-native-image-picker';
-import noDpImage from '../utils/constants';
+import {noDpImage} from '../utils/constants';
 import axios from 'axios';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import {getAllUsersBlog, allBlogsApi} from '../utils/constants';
@@ -26,6 +27,7 @@ const Profile = ({navigation}) => {
   const [newPassword, setnewPassword] = useState('');
   const [isLoading, setisLoading] = useState(true);
   const [userBlogs, setuserBlogs] = useState([]);
+  const [isPasswordVisible, setisPasswordVisible] = useState(false);
   const currentUserId = navigation.state.params.userId;
   const fullName = navigation.state.params.fullName;
   const password = navigation.state.params.password;
@@ -38,92 +40,83 @@ const Profile = ({navigation}) => {
       setuserBlogs(res.data);
       setisLoading(false);
     });
-
   }, [userBlogs]);
 
-  const checkingChangeInForm = () => {
-    console.log('old pic is',profilePic1,' new is ',profilePic)
+  const checkingChangeInForm = async() => {
+    setisLoading(true);
+    console.log('profile is', profilePic);
     if (
-      newFullName !== '' ||
-      newCompanyName !== '' ||
-      newPassword !== '' ||
-      profilePic !== null
+      newFullName === '' &&
+      newCompanyName === '' &&
+      newPassword === '' &&
+      profilePic === null
     ) {
-      setchanges('Save Changes');
-    }else{
-      setchanges('Edit');
-      alert('Please do chages')
+      setisLoading(false)
+      alert('Changes required');
+    } else {
+      console.log(
+        'final data is',
+        newFullName,
+        newCompanyName,
+        newPassword,
+        profilePic,
+        ' old is ',
+        fullName,
+        password,
+        companyName,
+      );
+      setisLoading(false);
+     await axios
+        .put(getAllUsersBlog, {
+          userId: currentUserId,
+          fullName: newFullName === '' ? fullName : newFullName,
+          password: newPassword === '' ? password : newPassword,
+          companyName: companyName === '' ? companyName : newCompanyName,
+          username:email,
+          profilePic: profilePic === null ? profilePic1 : profilePic.uri,
+        })
+        .then(res => {
+          console.log('resss is',res.data);
+          if (res) {
+            alert('Record updated');
+          } else {
+            alert('Error! Please try again');
+          }
+        })
+        .catch(error => {
+          console.log('errorr',error)
+          alert('Error! Please try again ');
+        });
     }
-    
   };
   const getAllCommentsFun = blogId => {
     navigation.navigate('Comments', {blogId: blogId, userId: currentUserId});
   };
-  function selectFile() {
-    // console.log('cam clicked');
-    // var options = {
-    //   title: 'Select Image',
-    //   customButtons: [
-    //     {
-    //       name: 'customOptionKey',
-    //       title: 'Choose file from Custom Option',
-    //     },
-    //   ],
-    //   storageOptions: {
-    //     skipBackup: true,
-    //     path: 'images',
-    //   },
-    // };
-    let options = {
-      storageOptions: {
-        skipBackup: true,
-        path: 'images',
-      },
-    };
+  const options = {
+    title: 'Select Image',
+    storageOptions: {
+      skipBackup: true,
+      path: 'images',
+    },
+  };
+
+  const selectFile = () => {
     ImagePicker.launchImageLibrary(options, response => {
-      console.log('Response = ', response);
       if (response.didCancel) {
         console.log('User cancelled image picker');
       } else if (response.error) {
         console.log('ImagePicker Error: ', response.error);
-      } else if (response.customButton) {
-        console.log('User tapped custom button: ', response.customButton);
       } else {
-        const source = {uri: response.uri};
-        console.log('response', JSON.stringify(response));
-        setprofilePic(source);
+        console.log('response iss', response);
+        setprofilePic(response.assets[0]);
       }
     });
-    // ImagePicker.launchImageLibrary(options,(res) => {
-    //   console.log('Response = ', res);
-
-    //   if (res.didCancel) {
-    //     console.log('User cancelled image picker');
-    //   } else if (res.error) {
-    //     console.log('ImagePicker Error: ', res.error);
-    //   } else if (res.customButton) {
-    //     console.log('User tapped custom button: ', res.customButton);
-    //     alert(res.customButton);
-    //   } else {
-    //     const source = {uri: 'data:image/jpeg;base64,' + res.data, isStatic: true};
-
-    //     // or a reference to the platform specific asset location
-    //     if (Platform.OS === 'ios') {
-    //        source = {uri: res.uri.replace('file://', ''), isStatic: true};
-    //     } else {
-    //        source = {uri: res.uri, isStatic: true};
-    //     }
-    //     setprofilePic(source);
-    //     console.log('profile isss',profilePic)
-    //   }
-    // });
-  }
+  };
   const deleteBlog = id => {
     setisLoading(true);
     axios
       .delete(`${allBlogsApi}/${id}`)
       .then(res => {
-        
         if (res) {
           alert('Blog Deleted');
           setisLoading(false);
@@ -146,76 +139,55 @@ const Profile = ({navigation}) => {
           <View style={styles.lists}>
             <Div className="row justify-content-space-evenly">
               <Div className="col">
-                { profilePic === 'null' ? 
-                <Image source={noDpImage}  style={{
-                  width: 90,
-                  height:50,
-                  borderRadius: 50,
-                  marginTop: 0,
-                }}/>
-                :
-                <Image source={profilePic}  style={{
-                  width: 90,
-                  borderRadius: 50,
-                  marginTop: 0,
-                }}/>  
-                }
+                {profilePic === null ? (
+                  <Image source={{uri: noDpImage}} style={styles.imageStyle} />
+                ) : (
+                  <Image source={profilePic} style={styles.imageStyle} />
+                )}
               </Div>
               <Div className="col">
-                <Button title="Selet image" onPress={() => selectFile()} />
+                <Button title="Selet image" onPress={selectFile} />
               </Div>
-              {/* <TouchableOpacity onPress={()=>selectFile} >
-              <Text style={{fontSize:20,height:50,marginTop:20}}>Select File</Text> */}
-              {/* <Button title="select file" onPress={selectFile}/> */}
-              {/* </TouchableOpacity> */}
-              {/* <Div className='col'>
-            <Pressable onPress={selectFile}>
-            <Icon name='camera' size={30}/>
-            </Pressable>
-         
-          </Div> */}
-
-              {/* <TouchableOpacity onPress={selectFile}>
-              <Text style={{fontSize:20,height:50,marginTop:20}}>Select File</Text>
-            </TouchableOpacity> */}
-              <Div className="col">
-                {/* <Image
+              {/* <Div className="col"> */}
+              {/* <Image
             source={{
               uri: 'data:image/jpeg;base64,' + resourcePath.data,
             }}
             style={{ width: 100, height: 100 }}
           /> */}
-                {/* <Image
-            source={{ uri: resourcePath}}
-            style={{ width: 200, height: 200 }}
-          /> */}
-                {/* <Text style={{ alignItems: 'center' }}>
-            {resourcePath.uri}
-          </Text> */}
-              </Div>
             </Div>
             <Div className="col">
-              <Text style={{fontSize: 20, height: 50, marginTop: 80}}>
-                {email}
-              </Text>
               <TextInput
-                value={fullName}
+                value={email}
+                style={{fontSize: 20, height: 50, marginTop: 0}}
+              />
+              <TextInput
+                defaultValue={fullName}
                 editable={true}
                 style={styles.inputs}
                 onChangeText={e => setNewFullName(e)}
               />
               <TextInput
-                value={companyName}
+                defaultValue={companyName}
                 editable={true}
                 style={styles.inputs}
                 onChangeText={e => setnewCompanyName(e)}
               />
-              <TextInput
-                value={password}
-                editable={true}
-                style={styles.inputs}
-                onChangeText={e => setnewPassword(e)}
-              />
+              <Div>
+                <TextInput
+                  defaultValue={password}
+                  secureTextEntry={!isPasswordVisible}
+                  editable={true}
+                  style={styles.inputs}
+                  onChangeText={e => setnewPassword(e)}
+                />
+                <Icon
+                  name={isPasswordVisible ? 'eye' : 'eye-slash'}
+                  style={styles.toggleEye}
+                  size={25}
+                  onPress={() => setisPasswordVisible(!isPasswordVisible)}
+                />
+              </Div>
             </Div>
 
             <View style={{marginTop: 10}}>
@@ -331,6 +303,12 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     padding: 10,
   },
+  imageStyle: {
+    width: 90,
+    height: 90,
+    borderRadius: 50,
+    marginTop: 0,
+  },
   lists1: {
     flexDirection: 'column',
     width: 340,
@@ -347,6 +325,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     height: 38,
     marginVertical: 5,
+  },
+  toggleEye: {
+    position: 'absolute',
+    color: 'black',
+    marginTop: 10,
+    marginLeft: 280,
   },
 });
 export default Profile;
